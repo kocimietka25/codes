@@ -6,7 +6,7 @@
 <title>⚛️ Budżet Planety – Elektrownia Atomowa</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -957,41 +957,80 @@ async function renderResults() {
     </div>
   `).join('');
 
-// ===== CHART =====
-const datasets = submissions.map(s => ({
-  label: s.group,
-  data: CATEGORIES.map(cat => s.values[cat.id] || 0),
-  borderWidth: 2,
-  backgroundColor: CATEGORIES.map(cat => cat.color) // opcjonalnie kolory
-}));
+// ===== CHART na podstawie tabeli =====
+function renderChartFromTableRange() {
+  const tbody = document.getElementById('diff-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
 
-const ctx = document.getElementById('main-chart');
+  const labels = [];
+  const avgData = [];
+  const minData = [];
+  const maxData = [];
 
-if (chartInstance) chartInstance.destroy();
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    labels.push(cells[0].textContent.trim());
+    avgData.push(parseFloat(cells[1].textContent));
+    const range = cells[2].textContent.split('–');
+    minData.push(parseFloat(range[0].trim()));
+    maxData.push(parseFloat(range[1].trim()));
+  });
 
-chartInstance = new Chart(ctx, {
-  type: 'bar', // dalej bar, ale dodaj indexAxis
-  data: {
-    labels: CATEGORIES.map(c => c.pl),
-    datasets: datasets
-  },
-  options: {
-    indexAxis: 'y', // <-- to sprawia, że wykres jest poziomy
-    responsive: true,
-    plugins: { legend: { position: 'bottom' } },
-    scales: {
-      x: { beginAtZero: true, max: 100 },
-      y: { ticks: { font: { size: 12 } } } // czytelne na telefonie
-    }
-  }
-});
+  const ctx = document.getElementById('main-chart');
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Zakres / Range',
+          data: maxData,
+          borderWidth: 0,
+          backgroundColor: 'rgba(79,195,247,0.2)',
+          fill: { target: { value: minData }, above: 'rgba(79,195,247,0.2)' },
+          pointRadius: 0
+        },
+        {
+          label: 'Średnia / Avg',
+          data: avgData,
+          borderColor: 'rgba(79,195,247,1)',
+          backgroundColor: 'rgba(79,195,247,0.6)',
+          borderWidth: 2,
+          pointRadius: 5,
+          pointBackgroundColor: 'rgba(79,195,247,1)',
+          fill: false
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        datalabels: {
+          color: '#fff',
+          anchor: 'end',
+          align: 'right',
+          formatter: (value, context) => {
+            if (context.dataset.label === 'Średnia / Avg') return value.toFixed(1);
+            return null; // etykieta tylko dla średniej
+          },
+          font: { weight: 'bold', size: 12 }
+        }
+      },
+      scales: { x: { beginAtZero: true, max: 100 } }
+    },
+    plugins: [ChartDataLabels] // aktywacja wtyczki
+  });
+}
 
   // ===== TABLE =====
   const tbody = document.getElementById('diff-tbody');
 
   tbody.innerHTML = CATEGORIES.map(cat => {
     const vals = submissions.map(s => s.values[cat.id] || 0);
-
     const avg = vals.reduce((a,b) => a+b, 0) / vals.length;
     const min = Math.min(...vals);
     const max = Math.max(...vals);
@@ -1005,6 +1044,9 @@ chartInstance = new Chart(ctx, {
       </tr>
     `;
   }).join('');
+
+// ===== CHART Z TABELI =====
+renderChartFromTableRange();
 }
 
 // ---- Toast ----
