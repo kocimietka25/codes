@@ -484,7 +484,19 @@ const db = firebase.firestore();
     margin-bottom: 20px;
   }
 
-  .chart-wrap { position: relative; height: 320px; }
+  .chart-wrap {
+    position: relative;
+    width: 100%;        /* zajmuje całą szerokość kontenera */
+    max-width: 100%;    /* nie wychodzi poza ekran */
+    height: auto;       /* wysokość automatyczna */
+    min-height: 250px;  /* minimalna wysokość wykresu */
+    overflow-x: visible;
+  }
+
+  canvas#main-chart {
+    width: 100% !important;  /* dynamiczna szerokość */
+    height: auto !important; /* dynamiczna wysokość */
+  }
 
   /* Diff table */
   .diff-section {
@@ -966,15 +978,6 @@ async function renderResults() {
 
   // ===== GRID =====
   const grid = document.getElementById('submissions-grid');
-
-  grid.innerHTML = submissions.map(s => `
-    <div class="submission-card">
-      <div class="submission-card-header">
-        <span class="submission-card-name">${s.group}</span>
-        <span class="submission-card-time">${new Date(s.time).toLocaleTimeString()}</span>
-      </div>
-    </div>
-  `).join('');
 
 // ===== CHART na podstawie tabeli =====
 function renderChartFromTableRange() {
