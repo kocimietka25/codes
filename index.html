@@ -957,29 +957,34 @@ async function renderResults() {
     </div>
   `).join('');
 
-  // ===== CHART =====
-  const datasets = submissions.map(s => ({
-    label: s.group,
-    data: CATEGORIES.map(cat => s.values[cat.id] || 0),
-    borderWidth: 2
-  }));
+// ===== CHART =====
+const datasets = submissions.map(s => ({
+  label: s.group,
+  data: CATEGORIES.map(cat => s.values[cat.id] || 0),
+  borderWidth: 2,
+  backgroundColor: CATEGORIES.map(cat => cat.color) // opcjonalnie kolory
+}));
 
-  const ctx = document.getElementById('main-chart');
+const ctx = document.getElementById('main-chart');
 
-  if (chartInstance) chartInstance.destroy();
+if (chartInstance) chartInstance.destroy();
 
-  chartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: CATEGORIES.map(c => c.pl),
-      datasets: datasets
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom' } },
-      scales: { y: { beginAtZero: true, max: 100 } }
+chartInstance = new Chart(ctx, {
+  type: 'bar', // dalej bar, ale dodaj indexAxis
+  data: {
+    labels: CATEGORIES.map(c => c.pl),
+    datasets: datasets
+  },
+  options: {
+    indexAxis: 'y', // <-- to sprawia, że wykres jest poziomy
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      x: { beginAtZero: true, max: 100 },
+      y: { ticks: { font: { size: 12 } } } // czytelne na telefonie
     }
-  });
+  }
+});
 
   // ===== TABLE =====
   const tbody = document.getElementById('diff-tbody');
