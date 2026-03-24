@@ -684,6 +684,25 @@ const db = firebase.firestore();
   .btn-back:hover { border-color: var(--accent); color: var(--accent); }
 
   @media (max-width: 600px) {
+    .score-bar-wrap {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      margin: 0;
+      border-radius: 0;
+      padding: 12px 16px;
+    }
+
+    .score-bar-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .score-bar-fill {
+      height: 6px; }
     .category-row { grid-template-columns: 24px 1fr; }
     .cat-input-wrap { grid-column: 1 / -1; }
     .submissions-grid { grid-template-columns: 1fr; }
@@ -969,7 +988,11 @@ function renderChartFromTableRange() {
 
   rows.forEach(row => {
     const cells = row.querySelectorAll('td');
-    labels.push(cells[0].textContent.trim());
+    // złamanie długich nazw kategorii co ~25 znaków
+    const name = cells[0].textContent.trim();
+    const wrappedName = name.length > 25 ? name.replace(/(.{25})/g, '$1\n') : name;
+    labels.push(wrappedName);
+
     avgData.push(parseFloat(cells[1].textContent));
     const range = cells[2].textContent.split('–');
     minData.push(parseFloat(range[0].trim()));
@@ -985,14 +1008,6 @@ function renderChartFromTableRange() {
       labels: labels,
       datasets: [
         {
-          label: 'Zakres / Range',
-          data: maxData,
-          borderWidth: 0,
-          backgroundColor: 'rgba(79,195,247,0.2)',
-          fill: { target: { value: minData }, above: 'rgba(79,195,247,0.2)' },
-          pointRadius: 0
-        },
-        {
           label: 'Średnia / Avg',
           data: avgData,
           borderColor: 'rgba(79,195,247,1)',
@@ -1007,6 +1022,7 @@ function renderChartFromTableRange() {
     options: {
       indexAxis: 'y',
       responsive: true,
+      maintainAspectRatio: false, // wypełnia wysokość kontenera
       plugins: {
         legend: { position: 'bottom' },
         datalabels: {
@@ -1015,14 +1031,24 @@ function renderChartFromTableRange() {
           align: 'right',
           formatter: (value, context) => {
             if (context.dataset.label === 'Średnia / Avg') return value.toFixed(1);
-            return null; // etykieta tylko dla średniej
+            return null;
           },
           font: { weight: 'bold', size: 12 }
         }
       },
-      scales: { x: { beginAtZero: true, max: 100 } }
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { stepSize: 10 } },
+        y: {
+          ticks: {
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0
+          }
+        }
+      },
+      layout: { padding: { top: 10, bottom: 5, left: 5, right: 10 } }
     },
-    plugins: [ChartDataLabels] // aktywacja wtyczki
+    plugins: [ChartDataLabels]
   });
 }
 
