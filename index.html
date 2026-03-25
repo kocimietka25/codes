@@ -329,18 +329,19 @@ function switchTab(t) {
   if(t==='results') renderResults();
 }
 
-// ---- Storage ----
-function loadSubmissions() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
-}
-function saveSubmissions(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-function clearAll() {
+async function clearAll() {
   if (!confirm('Usunąć wszystkie odpowiedzi? / Delete all responses?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  renderResults();
-  showToast('Usunięto wszystkie dane', 'error');
+
+  const snap = await db.collection("submissions").get();
+
+  const batch = db.batch();
+  snap.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+
+  await batch.commit();
+
+  location.reload();
 }
 
 function renderChartFromTableRange() {
