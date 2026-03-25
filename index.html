@@ -173,6 +173,21 @@ const db = firebase.firestore();
     min-height: 250px;  /* minimalna wysokość wykresu */
     overflow-x: visible;
   }
+  
+    /* Reset button */
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
 
   canvas#main-chart {
     width: 100% !important;  /* dynamiczna szerokość */
@@ -245,9 +260,13 @@ const db = firebase.firestore();
 
       <h3 style="margin: 40px 0 20px; font-family:'DM Serif Display'; font-size: 18px; color: var(--text-muted);">Wyniki:</h3>
       <div class="submissions-grid" id="submissions-grid"></div>
-      
+      <button class="btn-reset" onclick="clearAll()">🗑 Usuń wszystkie odpowiedzi / Clear all responses</button>
     </div>
   </div>
+
+</div>
+
+
 
 <script>
 const CATEGORIES = [
@@ -308,6 +327,20 @@ function switchTab(t) {
   document.getElementById('t-form').classList.toggle('active', t==='form');
   document.getElementById('t-results').classList.toggle('active', t==='results');
   if(t==='results') renderResults();
+}
+
+// ---- Storage ----
+function loadSubmissions() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+}
+function saveSubmissions(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function clearAll() {
+  if (!confirm('Usunąć wszystkie odpowiedzi? / Delete all responses?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  renderResults();
+  showToast('Usunięto wszystkie dane', 'error');
 }
 
 function renderChartFromTableRange() {
